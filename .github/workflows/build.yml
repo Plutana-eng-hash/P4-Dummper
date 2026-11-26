@@ -49,9 +49,9 @@ jobs:
         run: |
           export PS4_PAYLOAD_SDK="$GITHUB_WORKSPACE/ps4-payload-sdk"
           make -C payloads/goto_home clean all
-          test -s "payloads/goto_home/Goto Home.bin"
+          test -s "payloads/goto_home/GotoHome.bin"
           mkdir -p payload-dist
-          cp "payloads/goto_home/Goto Home.bin" payload-dist/
+          cp "payloads/goto_home/GotoHome.bin" "payload-dist/Goto Home.bin"
 
       - name: Upload Goto Home payload
         uses: actions/upload-artifact@v4

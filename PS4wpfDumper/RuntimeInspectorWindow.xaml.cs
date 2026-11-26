@@ -54,7 +54,8 @@ namespace PS4wpfDumper
             catch (ObjectDisposedException) { }
             catch (SocketException ex)
             {
-                statusText.Text = "Listener error: " + ex.Message;
+                if (cancellation == null || !cancellation.IsCancellationRequested)
+                    statusText.Text = "Listener error: " + ex.Message;
                 StopListener();
             }
             catch (Exception ex)

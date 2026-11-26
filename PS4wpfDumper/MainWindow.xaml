@@ -16,14 +16,48 @@
             <RowDefinition Height="95*"/>
             <RowDefinition Height="12*"/>
         </Grid.RowDefinitions>
-        <ListBox x:Name="outputListBox" Margin="15,28,0,50" SelectionChanged="outputListBox_SelectionChanged" Grid.Column="1" Grid.RowSpan="2" Height="280" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="450" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+        <ListBox x:Name="outputListBox" Margin="15,28,0,50" SelectionChanged="outputListBox_SelectionChanged" Grid.Column="1" Grid.RowSpan="2" Height="280" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="450" ScrollViewer.HorizontalScrollBarVisibility="Disabled" BorderThickness="1" BorderBrush="#FFD8DDE5" Background="#FFF8FAFC" Padding="4">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="{x:Type ListBoxItem}">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Margin" Value="0,0,0,4"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <EventSetter Event="PreviewMouseRightButtonDown" Handler="MountItem_PreviewMouseRightButtonDown"/>
+                    <Setter Property="ContextMenu">
+                        <Setter.Value>
+                            <ContextMenu>
+                                <MenuItem Header="Dump this mount" Click="MountDumpMenu_Click"/>
+                                <Separator/>
+                                <MenuItem Header="Copy title ID" Click="MountCopyTitleIdMenu_Click"/>
+                                <MenuItem Header="Open local dump folder" Click="MountOpenFolderMenu_Click"/>
+                                <MenuItem Header="Copy mount path" Click="MountCopyPathMenu_Click"/>
+                            </ContextMenu>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <Border Padding="7,5" Margin="1" BorderBrush="#FFE5E5E5" BorderThickness="0,0,0,1">
-                        <StackPanel>
-                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Text="{Binding Type}" FontSize="10" Foreground="#FF777777"/>
-                        </StackPanel>
+                    <Border Padding="8" Background="White" BorderBrush="#FFE5E9EF" BorderThickness="1" CornerRadius="5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="54"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="46" Height="46" CornerRadius="5" Background="#FF202A38" VerticalAlignment="Center">
+                                <Grid>
+                                    <Image Source="{Binding Icon}" Stretch="UniformToFill"/>
+                                    <TextBlock Text="PS" Foreground="White" FontSize="15" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,4,0">
+                                <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" FontSize="13" Foreground="#FF182230" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="#FF657184" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="2" Text="{Binding MountType}" FontSize="9" FontWeight="SemiBold" Foreground="#FF53657D" VerticalAlignment="Center" Margin="4,0,2,0"/>
+                        </Grid>
                     </Border>
                 </DataTemplate>
             </ListBox.ItemTemplate>

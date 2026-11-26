@@ -23,7 +23,7 @@
   <Grid Grid.Row="0" Margin="2,0,2,12">
    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
    <StackPanel><TextBlock Text="PLUTANA-DMP" FontSize="23" FontWeight="Bold"/><TextBlock Text="PS4 GAME DUMPER  •  PAYLOAD SENDER  •  CONSOLE FILES" Foreground="#FFE0E0E0" FontSize="11" Margin="0,3,0,0"/></StackPanel>
-   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><Button x:Name="ps4DashboardButton" Content="Console &amp; Files" Width="130" Height="34" Click="ps4DashboardButton_Click"/><Button x:Name="runtimeInspectorButton" Content="Runtime Inspector" Width="140" Height="34" Click="runtimeInspectorButton_Click"/></StackPanel>
+   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><Button x:Name="ps4DashboardButton" Content="Console &amp; Files" Width="130" Height="34" Click="ps4DashboardButton_Click"/><Button x:Name="runtimeInspectorButton" Content="Runtime Inspector" Width="140" Height="34" Click="runtimeInspectorButton_Click" Visibility="Collapsed"/></StackPanel>
   </Grid>
   <TabControl x:Name="mainTabs" Grid.Row="1" Background="#FF000000" BorderBrush="#FF888888">
    <TabItem Header="GAME DUMPER &amp; PAYLOAD">

@@ -104,10 +104,11 @@
             </GroupBox>
         </Grid>
         <Grid Grid.Row="4" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
             <TextBlock x:Name="statusLabel" Text="Ready. Connect to your PS4 to begin." Foreground="#AFAFAF" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
             <Button Grid.Column="1" x:Name="exportButton" Content="Export report" Height="32" MinWidth="110" Click="ExportButton_Click" IsEnabled="False" Background="#252525" Foreground="White" BorderBrush="#555555"/>
-            <Button Grid.Column="2" Content="Close" Height="32" MinWidth="80" Click="CloseButton_Click" Background="#252525" Foreground="White" BorderBrush="#555555"/>
+            <Button Grid.Column="2" Content="Open Dumper" Height="32" MinWidth="115" Click="OpenDumperButton_Click" Background="#F2F2F2" Foreground="#111111" BorderBrush="#F2F2F2"/>
+            <Button Grid.Column="3" Content="Close" Height="32" MinWidth="80" Click="CloseButton_Click" Background="#252525" Foreground="White" BorderBrush="#555555"/>
         </Grid>
     </Grid>
 </Window>

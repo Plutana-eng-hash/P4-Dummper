@@ -281,7 +281,10 @@ namespace PS4wpfDumper
             try{var result=await ftpClient.DownloadFile(d.FileName,r.FullPath,FtpLocalExists.Overwrite,FtpVerify.None);if(result!=FtpStatus.Success)throw new IOException("Download failed.");fileExplorerStatus.Text="Downloaded "+d.FileName;}catch(Exception ex){fileExplorerStatus.Text=ex.Message;}
         }
         private async void FileNewFolder_Click(object s,RoutedEventArgs e){
-            var d=new Microsoft.VisualBasic.Interaction(); 
+            string name=Microsoft.VisualBasic.Interaction.InputBox("Enter a folder name:","Create PS4 folder","NewFolder");
+            if(String.IsNullOrWhiteSpace(name)||name.Contains("/")||name.Contains("\\\\"))return;
+            try{string target=RemotePath.TrimEnd('/')+"/"+name;await ftpClient.CreateDirectory(target);await BrowseRemoteAsync();}
+            catch(Exception ex){fileExplorerStatus.Text=ex.Message;}
         }
         private async void FileDelete_Click(object s,RoutedEventArgs e){
             var r=remoteFilesList.SelectedItem as RemoteFileRow;if(r==null)return;

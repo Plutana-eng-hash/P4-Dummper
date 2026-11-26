@@ -189,7 +189,7 @@ namespace PS4wpfDumper
         {
             // Resolve all legacy relative paths (bins, libs, ext, output) from the EXE.
             Environment.CurrentDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            InitializeComponent();
+            InitializeComponent();\n            dashboardControl.SetConnectionSettings("10.0.0.6", 2121, "root", "root");
             // Wire context-menu actions in code instead of XAML. This keeps MenuItem
             // instances out of WPF's generated IComponentConnector table, avoiding
             // the MenuItem-to-Label cast failure during BAML startup.
@@ -246,7 +246,7 @@ namespace PS4wpfDumper
             password = passwordValue ?? String.Empty;
             port = portValue.ToString();
             ipTextBox.Text = host;
-            portTextBox.Text = port;
+            portTextBox.Text = port;\n            dashboardControl.SetConnectionSettings(host, portValue, username, password);
         }
 
         private void WireMountContextMenuActions()
@@ -277,19 +277,7 @@ namespace PS4wpfDumper
             }
         }
 
-        private void ps4DashboardButton_Click(object sender, RoutedEventArgs e)
-        {
-            int ftpPort;
-            if (String.IsNullOrWhiteSpace(host) || !Int32.TryParse(port, out ftpPort) || ftpPort < 1 || ftpPort > 65535)
-            {
-                MessageBox.Show("Enter a valid PS4 IP address and FTP port first.", "Connection details", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            var dashboard = new PS4DashboardWindow(host.Trim(), ftpPort, username, password) { Owner = this };
-            dashboard.Show();
-        }
-
-        private void runtimeInspectorButton_Click(object sender, RoutedEventArgs e)
+        private void ps4DashboardButton_Click(object sender, RoutedEventArgs e)\n        {\n            mainTabs.SelectedIndex = 1;\n        }\n\n        private void runtimeInspectorButton_Click(object sender, RoutedEventArgs e)
         {
             var inspector = new RuntimeInspectorWindow { Owner = this };
             inspector.Show();

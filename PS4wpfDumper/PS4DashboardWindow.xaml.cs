@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.ComponentModel;
+using Microsoft.Win32;
 using FluentFTP;
 
 namespace PS4wpfDumper
@@ -20,6 +21,7 @@ namespace PS4wpfDumper
         private AsyncFtpClient ftpClient;
         private readonly StringBuilder report = new StringBuilder();
         private bool busy;
+        private string editorRemotePath;
 
         public PS4DashboardWindow(string host, int port, string username, string password)
         {
@@ -63,6 +65,7 @@ namespace PS4wpfDumper
                     "FTP login: " + (String.IsNullOrWhiteSpace(username) ? "anonymous" : username) +
                     Environment.NewLine + "Transport: FTP (read-only dashboard scans)";
                 await ScanConnectedConsoleAsync();
+                await BrowseRemoteAsync();
             }
             catch (Exception ex)
             {
@@ -237,6 +240,53 @@ namespace PS4wpfDumper
             hostTextBox.IsEnabled = !value && (ftpClient == null || !ftpClient.IsConnected);
             portTextBox.IsEnabled = !value && (ftpClient == null || !ftpClient.IsConnected);
             statusLabel.Text = message;
+        }
+
+
+        private sealed class RemoteFileRow { public string Name {get;set;} public string FullPath {get;set;} public bool IsDirectory {get;set;} public string TypeLabel {get{return IsDirectory?"Folder":"File";}} public string SizeLabel {get;set;} }
+        private string RemotePath { get { var p=(filePathBox.Text??"/").Replace('\\','/').Trim(); if(!p.StartsWith("/"))p="/"+p; return p.Length>1?p.TrimEnd('/'):"/"; } }
+        private async Task BrowseRemoteAsync() {
+            if(ftpClient==null||!ftpClient.IsConnected) throw new IOException("Connect to PS4 first.");
+            string p=RemotePath; var items=await ftpClient.GetListing(p,FtpListOption.ForceList);
+            remoteFilesList.ItemsSource=items.Where(i=>i.Name!="."&&i.Name!="..").OrderByDescending(i=>i.Type==FtpObjectType.Directory).ThenBy(i=>i.Name,StringComparer.OrdinalIgnoreCase).Select(i=>new RemoteFileRow{Name=i.Name,FullPath=p=="/"?"/"+i.Name:p+"/"+i.Name,IsDirectory=i.Type==FtpObjectType.Directory,SizeLabel=i.Type==FtpObjectType.Directory?"—":i.Size.ToString("N0")+" bytes"}).ToList();
+            filePathBox.Text=p; fileExplorerStatus.Text=remoteFilesList.Items.Count+" items • "+p;
+        }
+        private async void FileGo_Click(object s,RoutedEventArgs e){await SafeBrowseAsync();}
+        private async void FileRefresh_Click(object s,RoutedEventArgs e){await SafeBrowseAsync();}
+        private async void FileUp_Click(object s,RoutedEventArgs e){string p=RemotePath; int n=p.LastIndexOf('/'); filePathBox.Text=n<=0?"/":p.Substring(0,n); await SafeBrowseAsync();}
+        private async Task SafeBrowseAsync(){try{await BrowseRemoteAsync();}catch(Exception ex){fileExplorerStatus.Text=ex.Message;}}
+        private async void RemoteFilesList_MouseDoubleClick(object s,System.Windows.Input.MouseButtonEventArgs e){
+            var r=remoteFilesList.SelectedItem as RemoteFileRow;if(r==null)return;
+            if(r.IsDirectory){filePathBox.Text=r.FullPath;await SafeBrowseAsync();return;}
+            string tmp=Path.Combine(Path.GetTempPath(),Guid.NewGuid().ToString("N")+".txt");
+            try{var info=await ftpClient.GetObjectInfo(r.FullPath);if(info!=null&&info.Size>2097152)throw new IOException("Text editor limit is 2 MB; use Download.");
+            var status=await ftpClient.DownloadFile(tmp,r.FullPath,FtpLocalExists.Overwrite,FtpVerify.None);if(status!=FtpStatus.Success)throw new IOException("Download failed.");
+            var bytes=File.ReadAllBytes(tmp);if(bytes.Any(b=>b==0))throw new IOException("Binary file: use Download instead.");
+            fileEditor.Text=new UTF8Encoding(false,true).GetString(bytes);fileEditor.IsEnabled=true;editorRemotePath=r.FullPath;fileExplorerStatus.Text="Editing "+r.FullPath;
+            }catch(Exception ex){fileExplorerStatus.Text=ex.Message;}finally{try{if(File.Exists(tmp))File.Delete(tmp);}catch{}}
+        }
+        private async void FileSave_Click(object s,RoutedEventArgs e){
+            if(String.IsNullOrEmpty(editorRemotePath)){fileExplorerStatus.Text="Open a text file first.";return;}
+            string tmp=Path.Combine(Path.GetTempPath(),Guid.NewGuid().ToString("N")+".txt");
+            try{File.WriteAllText(tmp,fileEditor.Text,new UTF8Encoding(false));var result=await ftpClient.UploadFile(tmp,editorRemotePath,FtpRemoteExists.Overwrite,true,FtpVerify.None);if(result!=FtpStatus.Success)throw new IOException("Upload failed.");fileExplorerStatus.Text="Saved "+editorRemotePath;await BrowseRemoteAsync();}
+            catch(Exception ex){fileExplorerStatus.Text=ex.Message;}finally{try{if(File.Exists(tmp))File.Delete(tmp);}catch{}}
+        }
+        private async void FileUpload_Click(object s,RoutedEventArgs e){
+            var d=new OpenFileDialog();if(d.ShowDialog(this)!=true)return;
+            try{string target=RemotePath.TrimEnd('/')+"/"+Path.GetFileName(d.FileName);var result=await ftpClient.UploadFile(d.FileName,target,FtpRemoteExists.Overwrite,true,FtpVerify.None);if(result!=FtpStatus.Success)throw new IOException("Upload failed.");await BrowseRemoteAsync();}
+            catch(Exception ex){fileExplorerStatus.Text=ex.Message;}
+        }
+        private async void FileDownload_Click(object s,RoutedEventArgs e){
+            var r=remoteFilesList.SelectedItem as RemoteFileRow;if(r==null||r.IsDirectory)return;var d=new SaveFileDialog{FileName=r.Name};if(d.ShowDialog(this)!=true)return;
+            try{var result=await ftpClient.DownloadFile(d.FileName,r.FullPath,FtpLocalExists.Overwrite,FtpVerify.None);if(result!=FtpStatus.Success)throw new IOException("Download failed.");fileExplorerStatus.Text="Downloaded "+d.FileName;}catch(Exception ex){fileExplorerStatus.Text=ex.Message;}
+        }
+        private async void FileNewFolder_Click(object s,RoutedEventArgs e){
+            var d=new Microsoft.VisualBasic.Interaction(); 
+        }
+        private async void FileDelete_Click(object s,RoutedEventArgs e){
+            var r=remoteFilesList.SelectedItem as RemoteFileRow;if(r==null)return;
+            if(MessageBox.Show("Delete "+r.Name+" from the PS4?","Confirm delete",MessageBoxButton.YesNo,MessageBoxImage.Warning)!=MessageBoxResult.Yes)return;
+            try{if(r.IsDirectory)await ftpClient.DeleteDirectory(r.FullPath);else await ftpClient.DeleteFile(r.FullPath);await BrowseRemoteAsync();}catch(Exception ex){fileExplorerStatus.Text=ex.Message;}
         }
 
         private void ExportButton_Click(object sender, RoutedEventArgs e)

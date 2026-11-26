@@ -1426,7 +1426,7 @@ namespace PS4wpfDumper
                     WBDs("Connecting to PS4 with: " + host.Trim() + ":" + ftpPort);
                     await conn.Connect();
 
-                    var listing = await conn.GetListing("/mnt/sandbox/pfsmnt/");
+                    var listing = await conn.GetListing("/mnt/sandbox/pfsmnt/", FtpListOption.ForceList);
                     var mounts = listing
                         .Where(item => item.Type == FtpObjectType.Directory)
                         .Where(item => !item.Name.EndsWith("-union", StringComparison.OrdinalIgnoreCase)
@@ -1590,7 +1590,7 @@ namespace PS4wpfDumper
                 await conn.Connect(token);
 
                 // Get the directory listing
-                var listing = await conn.GetListing("/mnt/sandbox/pfsmnt/");
+                var listing = await conn.GetListing("/mnt/sandbox/pfsmnt/", FtpListOption.ForceList);
 
                 // Stop the loading animation
                 this.Dispatcher.Invoke(() =>
@@ -1776,7 +1776,7 @@ namespace PS4wpfDumper
                                 WBDs($@"Calculating Download Size for right.prx package");
                                 totalSize = await GetDirectorySizeAsync(conn, $@"/user/appmeta/{CUSA}");
                                 WBDs($@"getting appmeta");
-                                listing = await conn.GetListing("/user/appmeta");
+                                listing = await conn.GetListing("/user/appmeta", FtpListOption.ForceList);
                                 await conn.DownloadDirectory($@"ext\meta", $@"/user/appmeta/{CUSA}", FtpFolderSyncMode.Update, FtpLocalExists.Overwrite, FtpVerify.None, null, progress);
                                 totalDownloadedBytes = 0;
                             }
@@ -1858,7 +1858,7 @@ namespace PS4wpfDumper
                             }
                             //await fixRight($@"ext\{CUSA}{type}\sce_sys\about\right.sprx");
 
-                            listing = await conn.GetListing($@"/user/trophy/conf/{debugMessage}");
+                            listing = await conn.GetListing($@"/user/trophy/conf/{debugMessage}", FtpListOption.ForceList);
                             await conn.DownloadDirectory($@"ext\trophy", $@"/user/trophy/conf/{debugMessage}", FtpFolderSyncMode.Update, FtpLocalExists.Overwrite, FtpVerify.None, null, progress);
                             //Fix trophy directory name
                             string trophyPath = $@"/user/trophy/conf/{debugMessage}/TROPHY.TRP";
@@ -1918,7 +1918,7 @@ namespace PS4wpfDumper
             FtpClient client = new FtpClient(ipaddr, int.Parse(port));
             client.Connect();
 
-            FtpListItem[] items = client.GetListing(filepath);
+            FtpListItem[] items = client.GetListing(filepath, FtpListOption.ForceList);
             foreach (FtpListItem item in items)
             {
                 Console.WriteLine(item);
@@ -2139,7 +2139,7 @@ namespace PS4wpfDumper
         {
             long totalSize = 0;
 
-            var items = await client.GetListing(remoteDirectoryPath);
+            var items = await client.GetListing(remoteDirectoryPath, FtpListOption.ForceList);
 
             foreach (var item in items)
             {

@@ -50,9 +50,9 @@ namespace PS4wpfDumper
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            var dashboard = new PS4DashboardWindow("10.0.0.6", 2121, "root", "root");
-            MainWindow = dashboard;
-            dashboard.Show();
+            var main = new MainWindow();
+            MainWindow = main;
+            main.Show();
         }
 
         private static string GetLogPath()

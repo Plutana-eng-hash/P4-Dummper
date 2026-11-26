@@ -33,10 +33,16 @@ jobs:
 
       - name: Download PS4 Payload SDK
         run: |
-          wget -q https://github.com/ps4-payload-dev/sdk/releases/latest/download/ps4-payload-sdk.zip -O ps4-payload-sdk.zip
-          mkdir -p "$GITHUB_WORKSPACE/ps4-payload-sdk"
+          curl --fail --location --retry 3 --retry-delay 2 \
+            https://github.com/ps4-payload-dev/sdk/releases/download/v0.9/ps4-payload-sdk.zip \
+            --output ps4-payload-sdk.zip
           unzip -q ps4-payload-sdk.zip -d "$GITHUB_WORKSPACE/ps4-payload-sdk"
-          test -f "$GITHUB_WORKSPACE/ps4-payload-sdk/toolchain/orbis.mk"
+          if [ ! -f "$GITHUB_WORKSPACE/ps4-payload-sdk/toolchain/orbis.mk" ]; then
+            echo "PS4 Payload SDK archive contents:"
+            unzip -l ps4-payload-sdk.zip | head -80
+            echo "Expected toolchain/orbis.mk was not found."
+            exit 1
+          fi
 
       - name: Build Goto Home.bin
         run: |

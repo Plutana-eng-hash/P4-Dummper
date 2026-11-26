@@ -1078,10 +1078,99 @@ namespace PS4wpfDumper
             port = portTextBox.Text;
         }
 
+        private FtpListItem GetSelectedFtpItem()
+        {
+            var model = outputListBox.SelectedItem as GameMountItem;
+            if (model != null) return model.Item;
+            return outputListBox.SelectedItem as FtpListItem;
+        }
+
+        private async Task LoadGameMountMetadataAsync(AsyncFtpClient conn, List<GameMountItem> mounts)
+        {
+            string cacheRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cache", "game-metadata");
+            Directory.CreateDirectory(cacheRoot);
+            foreach (var mount in mounts)
+            {
+                try
+                {
+                    string titleId = mount.TitleId;
+                    if (string.IsNullOrWhiteSpace(titleId) || !Regex.IsMatch(titleId, @"^[A-Z]{4}[0-9]{5}$")) continue;
+                    string folder = Path.Combine(cacheRoot, titleId);
+                    Directory.CreateDirectory(folder);
+                    string sfoPath = Path.Combine(folder, "param.sfo");
+                    string iconPath = Path.Combine(folder, "icon0.png");
+                    if (!File.Exists(sfoPath))
+                    {
+                        await conn.DownloadFile(sfoPath, "/user/appmeta/" + titleId + "/param.sfo", FtpLocalExists.Skip, FtpVerify.None);
+                    }
+                    if (!File.Exists(iconPath))
+                    {
+                        await conn.DownloadFile(iconPath, "/user/appmeta/" + titleId + "/icon0.png", FtpLocalExists.Skip, FtpVerify.None);
+                    }
+                    string friendlyName = null;
+                    string sfoTitleId = titleId;
+                    if (File.Exists(sfoPath))
+                    {
+                        var sfo = ParamSfo.Deserialize(File.ReadAllBytes(sfoPath));
+                        var titleValue = sfo["TITLE"];
+                        var idValue = sfo["TITLE_ID"];
+                        if (titleValue != null) friendlyName = titleValue.ToString();
+                        if (idValue != null) sfoTitleId = idValue.ToString();
+                    }
+                    mount.SetMetadata(friendlyName, sfoTitleId, iconPath);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Could not load metadata for " + mount.Item.Name + ": " + ex.Message);
+                }
+            }
+        }
+
+        private void MountItem_PreviewMouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var container = sender as System.Windows.Controls.ListBoxItem;
+            if (container != null) container.IsSelected = true;
+        }
+
+        private async void MountDumpMenu_Click(object sender, RoutedEventArgs e)
+        {
+            var item = GetSelectedFtpItem();
+            if (item == null) return;
+            bool isPatch = item.Name.EndsWith("-patch0", StringComparison.OrdinalIgnoreCase);
+            patchRadioButton.IsChecked = isPatch;
+            baseRadioButton.IsChecked = !isPatch;
+            await Task.Yield();
+            button_Click_1(sender, e);
+        }
+
+        private void MountCopyTitleIdMenu_Click(object sender, RoutedEventArgs e)
+        {
+            var model = outputListBox.SelectedItem as GameMountItem;
+            var item = GetSelectedFtpItem();
+            if (item == null) return;
+            string id = model == null ? Regex.Match(item.Name, @"[A-Z]{4}[0-9]{5}", RegexOptions.IgnoreCase).Value.ToUpperInvariant() : model.TitleId;
+            if (!string.IsNullOrWhiteSpace(id)) Clipboard.SetText(id);
+        }
+
+        private void MountOpenFolderMenu_Click(object sender, RoutedEventArgs e)
+        {
+            var item = GetSelectedFtpItem();
+            if (item == null) return;
+            string folder = Path.GetFullPath(Path.Combine("ext", item.Name));
+            if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+            Process.Start("explorer.exe", folder);
+        }
+
+        private void MountCopyPathMenu_Click(object sender, RoutedEventArgs e)
+        {
+            var item = GetSelectedFtpItem();
+            if (item != null) Clipboard.SetText(item.FullName);
+        }
+
         private void outputListBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             // Get the selected item in the ListBox
-            FtpListItem selectedItem = outputListBox.SelectedItem as FtpListItem;
+            FtpListItem selectedItem = GetSelectedFtpItem();
 
             if (selectedItem == null)
             {
@@ -1317,7 +1406,9 @@ namespace PS4wpfDumper
 
                     outputListBox.ItemsSource = null;
                     outputListBox.Items.Clear();
-                    outputListBox.ItemsSource = mounts;
+                    var mountItems = mounts.Select(item => new GameMountItem(item)).ToList();
+                    outputListBox.ItemsSource = mountItems;
+                    await LoadGameMountMetadataAsync(conn, mountItems);
 
                     if (mounts.Count == 0)
                     {
@@ -1487,7 +1578,7 @@ namespace PS4wpfDumper
                         loadingLabel.Content = "Error: Is ftp and your game running on your PS4?";
                         outputListBox.ItemsSource = String.Format("No Content To Load");
                     }
-                    outputListBox.ItemsSource = filteredListing;
+                    outputListBox.ItemsSource = filteredListing.Select(item => new GameMountItem(item)).ToList();
                 }
                 catch
                 {
@@ -1524,7 +1615,7 @@ namespace PS4wpfDumper
                 if (listing.Any()) // check if listing has any items
                 {
                     outputListBox.SelectedIndex = 0;
-                    FtpListItem firstItem = outputListBox.SelectedItem as FtpListItem; // get the first item
+                    FtpListItem firstItem = GetSelectedFtpItem(); // unwrap the selected mount model
 
                     if (firstItem == null)
                     {

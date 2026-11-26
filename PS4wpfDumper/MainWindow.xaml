@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PS4wpfDumper"
         mc:Ignorable="d"
-        Title="PS4 Dumper" SizeToContent="WidthAndHeight" Width="788.448" Icon="libs/BigMac.ico">
+        Title="Plutana-DMP | PS4 Dumper" SizeToContent="WidthAndHeight" Width="788.448" MinWidth="788" Icon="libs/BigMac.ico">
     <Grid Margin="0,0,3,10" Height="392" RenderTransformOrigin="0.425,0.588">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="0*"/>
@@ -16,8 +16,20 @@
             <RowDefinition Height="95*"/>
             <RowDefinition Height="12*"/>
         </Grid.RowDefinitions>
-        <ListBox x:Name="outputListBox" Margin="15,0,0,50" SelectionChanged="outputListBox_SelectionChanged" Grid.Column="1" Grid.RowSpan="2" Height="308" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="450"/>
-        <GroupBox x:Name="listingGroupBox" Header="Select Item To Dump" Margin="477,1,11,0" Grid.Column="1" Grid.RowSpan="2" Height="355" VerticalAlignment="Top">
+        <ListBox x:Name="outputListBox" Margin="15,28,0,50" SelectionChanged="outputListBox_SelectionChanged" Grid.Column="1" Grid.RowSpan="2" Height="280" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="450" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border Padding="7,5" Margin="1" BorderBrush="#FFE5E5E5" BorderThickness="0,0,0,1">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="{Binding Type}" FontSize="10" Foreground="#FF777777"/>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <Label x:Name="listingStatusLabel" Content="Connect to your PS4 to detect mounted games" Margin="15,2,0,0" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Left" Width="450" FontWeight="SemiBold"/>
+        <GroupBox x:Name="listingGroupBox" Header="Detected PS4 Game Mounts" Margin="477,1,11,0" Grid.Column="1" Grid.RowSpan="2" Height="355" VerticalAlignment="Top">
             <Image x:Name="image" Margin="118,-4,0,0" HorizontalAlignment="Left" Width="121" Height="114" VerticalAlignment="Top"/>
         </GroupBox>
 
@@ -50,7 +62,9 @@
         <Label x:Name="label" Content="PS4 Port: " HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="493,0,0,160" RenderTransformOrigin="0.995,0.381" Grid.Column="1" Height="26" Width="60" Grid.Row="1"/>
         <Label x:Name="ipLabel" Content="PS4 IP Address: " Margin="493,158,0,184" RenderTransformOrigin="0.022,0.434" Grid.Column="1" Grid.RowSpan="2" HorizontalAlignment="Left" Width="110"/>
         <Button x:Name="button2" Content="Check SFO" Margin="678,181,0,0" Grid.RowSpan="2" Click="button2_Click" Grid.Column="1" HorizontalAlignment="Left" Width="75" Height="20" VerticalAlignment="Top" Grid.Row="1" Visibility="Hidden"/>
-        <CheckBox x:Name="checkBox" Content="Build FPKG" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="569,145,0,0" Grid.Column="1" Height="15" Width="77" Grid.Row="1"/>
+        <CheckBox x:Name="checkBox" Content="Build FPKG" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="569,145,0,0" Grid.Column="1" Height="15" Width="77" Grid.Row="1" Visibility="Collapsed"/>
+        <Label Content="Dump format:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="491,139,0,0" Grid.Column="1" Grid.Row="1" Height="25" Width="77" FontSize="10"/>
+        <ComboBox x:Name="formatComboBox" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="568,139,0,0" Grid.Column="1" Grid.Row="1" Height="25" Width="180"/>
         <Label x:Name="cidLabel" Content="" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1,164,0,0" Height="33" Width="465" Grid.RowSpan="2" Grid.Row="1" Grid.Column="1" />
         <Label x:Name="prcnt" Content="" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1,2,0,-4" Width="465" Grid.Row="2" Grid.Column="1" Height="26"/>
         <CheckBox x:Name="sendPayloadCheckBox" Content="Send Payload" Checked="MyCheckBox_Checked" Unchecked="MyCheckBox_Unchecked" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Column="1" Margin="498,137,0,0" Height="15" Width="91"/>

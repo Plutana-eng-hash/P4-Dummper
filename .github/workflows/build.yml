@@ -69,7 +69,9 @@ jobs:
       - name: Build TrampWare
         run: |
           mkdir -p plugin-dist
+          mkdir -p Trampware/bin/plugins/prx_final Trampware/bin/plugins/elf_final
           make -C Trampware/plugin_src/trampware clean
+          mkdir -p Trampware/bin/plugins/prx_final Trampware/bin/plugins/elf_final
           make -C Trampware/plugin_src/trampware DEBUG=0 PRINTF=1
           test -s Trampware/bin/plugins/prx_final/trampware.prx
           cp Trampware/bin/plugins/prx_final/trampware.prx plugin-dist/TrampWare.prx

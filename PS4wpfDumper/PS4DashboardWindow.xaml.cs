@@ -281,7 +281,7 @@ namespace PS4wpfDumper
             catch(Exception ex){fileExplorerStatus.Text=ex.Message; activityLabel.Text="Upload failed: "+ex.Message;}
         }
         private async void FileDownload_Click(object s,RoutedEventArgs e){
-            var r=remoteFilesList.SelectedItem as RemoteFileRow;if(r==null||r.IsDirectory)return;var d=new SaveFileDialog{FileName=r.Name};if(d.ShowDialog(this)!=true)return;
+            var r=remoteFilesList.SelectedItem as RemoteFileRow;if(r==null||r.IsDirectory)return;var d=new SaveFileDialog{FileName=r.Name};if(d.ShowDialog(Window.GetWindow(this))!=true)return;
             try{var result=await ftpClient.DownloadFile(d.FileName,r.FullPath,FtpLocalExists.Overwrite,FtpVerify.None);if(result!=FtpStatus.Success)throw new IOException("Download failed.");fileExplorerStatus.Text="Downloaded "+d.FileName;activityLabel.Text="Downloaded: "+d.FileName;}catch(Exception ex){fileExplorerStatus.Text=ex.Message;}
         }
         private string PromptForFolderName()

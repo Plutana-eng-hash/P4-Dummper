@@ -130,6 +130,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="MessageEventArgs.cs" />
+    <Compile Include="DumpManifest.cs" />
     <Compile Include="GP4\Gp4Creator.cs" />
     <Compile Include="GP4\Gp4Project.cs" />
     <Compile Include="GP4\Gp4Validator.cs" />

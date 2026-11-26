@@ -36,9 +36,13 @@ The in-game menu opens with **L3 + R3** by default. Use D-pad navigation, Cross 
 
 **Important:** FTP copying the plugin does not inject it into a game that is already running. GoldHEN loads configured plugins at the supported game/plugin startup point. The PC app must not claim that the menu is live until the plugin is actually loaded.
 
-## Goto Home
+## Goto Home payload
 
-A Goto Home action must use the PS4 system's normal application-exit request (`sceSystemServiceLoadExec("exit", NULL)`). It must not kill arbitrary processes or reboot the console. This repository does not yet ship a verified Goto Home payload binary; the binary needs to be built and validated against the PS4 payload SDK and supported firmware before it is offered as a runnable `.bin`. A source placeholder or renamed PRX would not be a working payload.
+The **Goto Home.bin** payload is built by the main GitHub Actions workflow with the PS4 Payload SDK and included in the Windows ZIP at `payloads/Goto Home.bin`. It is also uploaded separately as the `Goto-Home-PS4-payload` artifact.
+
+Load it once through a compatible PS4 ELF/BinLoader. It resolves `sceSystemServiceLoadExec` from the system's `libSceSystemService.sprx` and requests the normal `exit` operation, which closes the foreground application and returns to the PS4 home screen. It does not reboot the console, kill unrelated processes, or leave a resident background task.
+
+**Self-removal:** BinLoader receives the payload as an in-memory ELF; it is not installed as a file on the PS4. When the exit request completes, the payload execution ends. There is therefore no on-console payload file to delete. The built `.bin` remains in the downloaded ZIP/artifact on the PC until you delete it yourself.
 
 ## Existing payloads
 

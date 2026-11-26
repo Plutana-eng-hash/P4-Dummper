@@ -187,6 +187,8 @@ namespace PS4wpfDumper
         }
         public MainWindow()
         {
+            // Resolve all legacy relative paths (bins, libs, ext, output) from the EXE.
+            Environment.CurrentDirectory = AppDomain.CurrentDomain.BaseDirectory;
             InitializeComponent();
             formatComboBox.Items.Clear();
             formatComboBox.Items.Add("Raw game dump");

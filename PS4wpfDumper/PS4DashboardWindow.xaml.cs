@@ -254,6 +254,17 @@ namespace PS4wpfDumper
             }
         }
 
+        private void OpenDumperButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dumper = new MainWindow();
+            int port;
+            if (!Int32.TryParse(portTextBox.Text, out port)) port = 2121;
+            dumper.ApplyConnectionSettings(hostTextBox.Text.Trim(), port, username, password);
+            dumper.Owner = this;
+            dumper.Show();
+            statusLabel.Text = "Opened PS4 Dumper with the current connection settings.";
+        }
+
         private async void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             await DisconnectClientAsync();

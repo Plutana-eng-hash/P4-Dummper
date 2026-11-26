@@ -27,11 +27,11 @@
                     <Setter Property="ContextMenu">
                         <Setter.Value>
                             <ContextMenu>
-                                <MenuItem Header="Dump this mount" Click="MountDumpMenu_Click"/>
+                                <MenuItem Header="Dump this mount"/>
                                 <Separator/>
-                                <MenuItem Header="Copy title ID" Click="MountCopyTitleIdMenu_Click"/>
-                                <MenuItem Header="Open local dump folder" Click="MountOpenFolderMenu_Click"/>
-                                <MenuItem Header="Copy mount path" Click="MountCopyPathMenu_Click"/>
+                                <MenuItem Header="Copy title ID"/>
+                                <MenuItem Header="Open local dump folder"/>
+                                <MenuItem Header="Copy mount path"/>
                             </ContextMenu>
                         </Setter.Value>
                     </Setter>

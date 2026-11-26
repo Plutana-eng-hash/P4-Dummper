@@ -189,7 +189,8 @@ namespace PS4wpfDumper
         {
             // Resolve all legacy relative paths (bins, libs, ext, output) from the EXE.
             Environment.CurrentDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            InitializeComponent();\n            dashboardControl.SetConnectionSettings("10.0.0.6", 2121, "root", "root");
+            InitializeComponent();
+            dashboardControl.SetConnectionSettings("10.0.0.6", 2121, "root", "root");
             // Wire context-menu actions in code instead of XAML. This keeps MenuItem
             // instances out of WPF's generated IComponentConnector table, avoiding
             // the MenuItem-to-Label cast failure during BAML startup.
@@ -246,7 +247,8 @@ namespace PS4wpfDumper
             password = passwordValue ?? String.Empty;
             port = portValue.ToString();
             ipTextBox.Text = host;
-            portTextBox.Text = port;\n            dashboardControl.SetConnectionSettings(host, portValue, username, password);
+            portTextBox.Text = port;
+            dashboardControl.SetConnectionSettings(host, portValue, username, password);
         }
 
         private void WireMountContextMenuActions()
@@ -277,7 +279,12 @@ namespace PS4wpfDumper
             }
         }
 
-        private void ps4DashboardButton_Click(object sender, RoutedEventArgs e)\n        {\n            mainTabs.SelectedIndex = 1;\n        }\n\n        private void runtimeInspectorButton_Click(object sender, RoutedEventArgs e)
+        private void ps4DashboardButton_Click(object sender, RoutedEventArgs e)
+        {
+            mainTabs.SelectedIndex = 1;
+        }
+
+        private void runtimeInspectorButton_Click(object sender, RoutedEventArgs e)
         {
             var inspector = new RuntimeInspectorWindow { Owner = this };
             inspector.Show();

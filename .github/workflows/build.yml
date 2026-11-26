@@ -128,7 +128,7 @@ jobs:
           retention-days: 30
 
   build:
-    needs: build_trampware
+    needs: [build_trampware, build_goto_home]
     runs-on: windows-latest
 
     steps:

@@ -239,6 +239,16 @@ namespace PS4wpfDumper
             startClean();
         }
 
+        public void ApplyConnectionSettings(string hostValue, int portValue, string usernameValue, string passwordValue)
+        {
+            host = hostValue ?? String.Empty;
+            username = usernameValue ?? String.Empty;
+            password = passwordValue ?? String.Empty;
+            port = portValue.ToString();
+            ipTextBox.Text = host;
+            portTextBox.Text = port;
+        }
+
         private void WireMountContextMenuActions()
         {
             var setter = outputListBox.ItemContainerStyle.Setters

@@ -163,11 +163,24 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore ${{ env.SOLUTION }} -NonInteractive
 
+      - name: Clean WPF generated build files
+        shell: pwsh
+        run: |
+          # MainWindow.xaml produces both generated connector code and BAML.
+          # Remove both sides before compiling so their connection IDs cannot
+          # come from different incremental-build generations.
+          Get-ChildItem -Path . -Directory -Recurse -Force |
+            Where-Object { $_.Name -in @("bin", "obj") } |
+            Sort-Object { $_.FullName.Length } -Descending |
+            ForEach-Object { Remove-Item $_.FullName -Recurse -Force -ErrorAction SilentlyContinue }
+
       - name: Build (Release | x64)
         run: >
           msbuild ${{ env.SOLUTION }}
+          /t:Rebuild
           /p:Configuration=${{ env.CONFIGURATION }}
           /p:Platform=${{ env.PLATFORM }}
+          /p:BuildProjectReferences=true
           /m /nologo /verbosity:minimal
 
       - name: Stage distribution folder

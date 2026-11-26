@@ -24,7 +24,9 @@ namespace PS4wpfDumper
         private bool busy;
         private string editorRemotePath;
 
-        public PS4DashboardWindow() : this("10.0.0.6", 2121, "root", "root") { }\n\n        public PS4DashboardWindow(string host, int port, string username, string password)
+        public PS4DashboardWindow() : this("10.0.0.6", 2121, "root", "root") { }
+
+        public PS4DashboardWindow(string host, int port, string username, string password)
         {
             InitializeComponent();
             initialHost = host ?? "";

@@ -117,6 +117,7 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Net.Http" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
@@ -130,6 +131,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="MessageEventArgs.cs" />
+    <Compile Include="RuntimeInspectorWindow.xaml.cs"><DependentUpon>RuntimeInspectorWindow.xaml</DependentUpon><SubType>Code</SubType></Compile>
     <Compile Include="DumpManifest.cs" />
     <Compile Include="GP4\Gp4Creator.cs" />
     <Compile Include="GP4\Gp4Project.cs" />
@@ -166,6 +168,7 @@
     <Compile Include="Util\SubStream.cs" />
     <Compile Include="Util\WriterBase.cs" />
     <Compile Include="Util\XtsBlockTransform.cs" />
+    <Page Include="RuntimeInspectorWindow.xaml"><Generator>MSBuild:Compile</Generator><SubType>Designer</SubType></Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

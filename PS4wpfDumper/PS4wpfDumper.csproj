@@ -131,6 +131,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="MessageEventArgs.cs" />
+    <Compile Include="GameMountItem.cs" />
     <Compile Include="RuntimeInspectorWindow.xaml.cs"><DependentUpon>RuntimeInspectorWindow.xaml</DependentUpon><SubType>Code</SubType></Compile>
     <Compile Include="DumpManifest.cs" />
     <Compile Include="GP4\Gp4Creator.cs" />

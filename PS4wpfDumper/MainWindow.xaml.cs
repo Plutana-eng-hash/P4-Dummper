@@ -279,6 +279,18 @@ namespace PS4wpfDumper
             dashboard.Show();
         }
 
+        private void ps4DashboardButton_Click(object sender, RoutedEventArgs e)
+        {
+            int ftpPort;
+            if (String.IsNullOrWhiteSpace(host) || !Int32.TryParse(port, out ftpPort) || ftpPort < 1 || ftpPort > 65535)
+            {
+                MessageBox.Show("Enter a valid PS4 IP address and FTP port first.", "Connection details", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            var dashboard = new PS4DashboardWindow(host.Trim(), ftpPort, username, password) { Owner = this };
+            dashboard.Show();
+        }
+
         private void runtimeInspectorButton_Click(object sender, RoutedEventArgs e)
         {
             var inspector = new RuntimeInspectorWindow { Owner = this };

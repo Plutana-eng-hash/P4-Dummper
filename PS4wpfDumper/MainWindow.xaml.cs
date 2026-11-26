@@ -233,6 +233,12 @@ namespace PS4wpfDumper
             startClean();
         }
 
+        private void runtimeInspectorButton_Click(object sender, RoutedEventArgs e)
+        {
+            var inspector = new RuntimeInspectorWindow { Owner = this };
+            inspector.Show();
+        }
+
         private void startClean()
         {
             string path = $@"ext\";

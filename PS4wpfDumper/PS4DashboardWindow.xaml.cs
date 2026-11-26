@@ -273,7 +273,7 @@ namespace PS4wpfDumper
             catch(Exception ex){fileExplorerStatus.Text=ex.Message;}finally{try{if(File.Exists(tmp))File.Delete(tmp);}catch{}}
         }
         private async void FileUpload_Click(object s,RoutedEventArgs e){
-            var d=new OpenFileDialog();if(d.ShowDialog(this)!=true)return;
+            var d=new OpenFileDialog();if(d.ShowDialog(Window.GetWindow(this))!=true)return;
             try{string target=RemotePath.TrimEnd('/')+"/"+Path.GetFileName(d.FileName);var result=await ftpClient.UploadFile(d.FileName,target,FtpRemoteExists.Overwrite,true,FtpVerify.None);if(result!=FtpStatus.Success)throw new IOException("Upload failed.");await BrowseRemoteAsync(); activityLabel.Text="Uploaded: "+Path.GetFileName(d.FileName);}
             catch(Exception ex){fileExplorerStatus.Text=ex.Message; activityLabel.Text="Upload failed: "+ex.Message;}
         }

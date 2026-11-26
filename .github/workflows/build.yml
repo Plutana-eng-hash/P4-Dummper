@@ -19,12 +19,83 @@ env:
   APP_NAME: PS4Dumper
 
 jobs:
+  build_trampware:
+    name: Build TrampWare GoldHEN plugin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PS4Dumper
+        uses: actions/checkout@v4
+
+      - name: Checkout TrampWare source
+        uses: actions/checkout@v4
+        with:
+          repository: Plutana-eng-hash/Trampware
+          ref: main
+          path: Trampware
+
+      - name: Checkout GoldHEN Plugins SDK
+        uses: actions/checkout@v4
+        with:
+          repository: GoldHEN/GoldHEN_Plugins_SDK
+          path: SDK
+
+      - name: Checkout mxml
+        uses: actions/checkout@v4
+        with:
+          repository: illusion0001/mxml
+          ref: clang-14
+          path: mxml
+
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y llvm lld make
+
+      - name: Download OpenOrbis toolchain
+        run: curl -fsSL https://github.com/illusion0001/OpenOrbis-PS4-Toolchain/releases/latest/download/toolchain.tar.gz | tar xz -C ./
+
+      - name: Configure toolchain
+        run: |
+          echo "OO_PS4_TOOLCHAIN=$GITHUB_WORKSPACE/OpenOrbis/PS4Toolchain" >> "$GITHUB_ENV"
+          echo "GOLDHEN_SDK=$GITHUB_WORKSPACE/SDK" >> "$GITHUB_ENV"
+
+      - name: Install mxml dependency
+        working-directory: mxml/ps4
+        run: |
+          wget -q https://raw.githubusercontent.com/bucanero/oosdk_libraries/master/build_rules.mk -O "$GITHUB_WORKSPACE/OpenOrbis/PS4Toolchain/build_rules.mk"
+          make install PRX_BUILD=1
+
+      - name: Build GoldHEN SDK
+        run: make -C "$GITHUB_WORKSPACE/SDK" PRINTF=1 DEBUGFLAGS=1
+
+      - name: Build TrampWare
+        run: |
+          mkdir -p plugin-dist
+          make -C Trampware/plugin_src/trampware clean
+          make -C Trampware/plugin_src/trampware DEBUG=0 PRINTF=1
+          test -s Trampware/bin/plugins/prx_final/trampware.prx
+          cp Trampware/bin/plugins/prx_final/trampware.prx plugin-dist/TrampWare.prx
+          cp Trampware/bin/plugins/prx_final/trampware.prx plugin-dist/TrampWare.sprx
+
+      - name: Upload TrampWare build
+        uses: actions/upload-artifact@v4
+        with:
+          name: TrampWare-PS4-plugin
+          path: plugin-dist/*
+          if-no-files-found: error
+          retention-days: 30
+
   build:
+    needs: build_trampware
     runs-on: windows-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Download TrampWare plugin
+        uses: actions/download-artifact@v4
+        with:
+          name: TrampWare-PS4-plugin
+          path: plugin-dist
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
@@ -58,6 +129,8 @@ jobs:
           # Runtime assembly probing expects dependencies in .\libs
           New-Item -ItemType Directory -Force -Path "$dist/libs" | Out-Null
           Copy-Item "PS4wpfDumper/libs/FluentFTP.dll" "$dist/libs/" -Force
+          New-Item -ItemType Directory -Force -Path "$dist/plugins" | Out-Null
+          Copy-Item "plugin-dist/*" "$dist/plugins/" -Force
           # Strip debug/doc leftovers
           Get-ChildItem $dist -Recurse -Include *.pdb,*.xml | Remove-Item -Force
           if (-not (Test-Path "$dist/${{ env.APP_NAME }}.exe")) { throw "Build output missing: ${{ env.APP_NAME }}.exe" }

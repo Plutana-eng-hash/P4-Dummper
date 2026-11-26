@@ -280,12 +280,53 @@ namespace PS4wpfDumper
             var r=remoteFilesList.SelectedItem as RemoteFileRow;if(r==null||r.IsDirectory)return;var d=new SaveFileDialog{FileName=r.Name};if(d.ShowDialog(this)!=true)return;
             try{var result=await ftpClient.DownloadFile(d.FileName,r.FullPath,FtpLocalExists.Overwrite,FtpVerify.None);if(result!=FtpStatus.Success)throw new IOException("Download failed.");fileExplorerStatus.Text="Downloaded "+d.FileName;}catch(Exception ex){fileExplorerStatus.Text=ex.Message;}
         }
-        private async void FileNewFolder_Click(object s,RoutedEventArgs e){
-            string name=Microsoft.VisualBasic.Interaction.InputBox("Enter a folder name:","Create PS4 folder","NewFolder");
-            if(String.IsNullOrWhiteSpace(name)||name.Contains("/")||name.Contains("\\\\"))return;
-            try{string target=RemotePath.TrimEnd('/')+"/"+name;await ftpClient.CreateDirectory(target);await BrowseRemoteAsync();}
-            catch(Exception ex){fileExplorerStatus.Text=ex.Message;}
+        private string PromptForFolderName()
+        {
+            var dialog = new Window
+            {
+                Title = "Create PS4 folder",
+                Width = 360,
+                Height = 150,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = this,
+                ResizeMode = ResizeMode.NoResize,
+                ShowInTaskbar = false,
+                Background = new SolidColorBrush(Color.FromRgb(28, 28, 28)),
+                Foreground = Brushes.White
+            };
+            var panel = new System.Windows.Controls.StackPanel { Margin = new Thickness(14) };
+            panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Folder name", Margin = new Thickness(0, 0, 0, 8) });
+            var nameBox = new System.Windows.Controls.TextBox { Text = "NewFolder", Padding = new Thickness(6) };
+            panel.Children.Add(nameBox);
+            var buttons = new System.Windows.Controls.StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 12, 0, 0) };
+            var create = new System.Windows.Controls.Button { Content = "Create", Width = 82, Margin = new Thickness(0, 0, 8, 0), IsDefault = true };
+            var cancel = new System.Windows.Controls.Button { Content = "Cancel", Width = 82, IsCancel = true };
+            create.Click += (sender, args) => { dialog.DialogResult = true; };
+            buttons.Children.Add(create);
+            buttons.Children.Add(cancel);
+            panel.Children.Add(buttons);
+            dialog.Content = panel;
+            nameBox.Focus();
+            nameBox.SelectAll();
+            return dialog.ShowDialog() == true ? nameBox.Text.Trim() : null;
         }
+
+        private async void FileNewFolder_Click(object s, RoutedEventArgs e)
+        {
+            if (ftpClient == null || !ftpClient.IsConnected) { fileExplorerStatus.Text = "Connect to PS4 first."; return; }
+            string name = PromptForFolderName();
+            if (String.IsNullOrWhiteSpace(name) || name == "." || name == ".." ||
+                name.IndexOfAny(new[] { '/', '\\\\' }) >= 0) return;
+            try
+            {
+                string target = RemotePath == "/" ? "/" + name : RemotePath + "/" + name;
+                await ftpClient.CreateDirectory(target);
+                await BrowseRemoteAsync();
+                fileExplorerStatus.Text = "Created " + target;
+            }
+            catch (Exception ex) { fileExplorerStatus.Text = ex.Message; }
+        }
+
         private async void FileDelete_Click(object s,RoutedEventArgs e){
             var r=remoteFilesList.SelectedItem as RemoteFileRow;if(r==null)return;
             if(MessageBox.Show("Delete "+r.Name+" from the PS4?","Confirm delete",MessageBoxButton.YesNo,MessageBoxImage.Warning)!=MessageBoxResult.Yes)return;

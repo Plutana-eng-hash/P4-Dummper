@@ -19,6 +19,41 @@ env:
   APP_NAME: PS4Dumper
 
 jobs:
+  build_goto_home:
+    name: Build Goto Home one-shot payload
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install payload SDK build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-18 lld-18 make unzip wget
+
+      - name: Download PS4 Payload SDK
+        run: |
+          wget -q https://github.com/ps4-payload-dev/sdk/releases/latest/download/ps4-payload-sdk.zip -O ps4-payload-sdk.zip
+          mkdir -p "$GITHUB_WORKSPACE/ps4-payload-sdk"
+          unzip -q ps4-payload-sdk.zip -d "$GITHUB_WORKSPACE/ps4-payload-sdk"
+          test -f "$GITHUB_WORKSPACE/ps4-payload-sdk/toolchain/orbis.mk"
+
+      - name: Build Goto Home.bin
+        run: |
+          export PS4_PAYLOAD_SDK="$GITHUB_WORKSPACE/ps4-payload-sdk"
+          make -C payloads/goto_home clean all
+          test -s "payloads/goto_home/Goto Home.bin"
+          mkdir -p payload-dist
+          cp "payloads/goto_home/Goto Home.bin" payload-dist/
+
+      - name: Upload Goto Home payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: Goto-Home-PS4-payload
+          path: payload-dist/Goto Home.bin
+          if-no-files-found: error
+          retention-days: 30
+
   build_trampware:
     name: Build TrampWare GoldHEN plugin
     runs-on: ubuntu-latest
@@ -99,6 +134,12 @@ jobs:
           name: TrampWare-PS4-plugin
           path: plugin-dist
 
+      - name: Download Goto Home payload
+        uses: actions/download-artifact@v4
+        with:
+          name: Goto-Home-PS4-payload
+          path: payload-dist
+
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
@@ -133,6 +174,8 @@ jobs:
           Copy-Item "PS4wpfDumper/libs/FluentFTP.dll" "$dist/libs/" -Force
           New-Item -ItemType Directory -Force -Path "$dist/plugins" | Out-Null
           Copy-Item "plugin-dist/*" "$dist/plugins/" -Force
+          New-Item -ItemType Directory -Force -Path "$dist/payloads" | Out-Null
+          Copy-Item "payload-dist/Goto Home.bin" "$dist/payloads/Goto Home.bin" -Force
           # Strip debug/doc leftovers
           Get-ChildItem $dist -Recurse -Include *.pdb,*.xml | Remove-Item -Force
           if (-not (Test-Path "$dist/${{ env.APP_NAME }}.exe")) { throw "Build output missing: ${{ env.APP_NAME }}.exe" }

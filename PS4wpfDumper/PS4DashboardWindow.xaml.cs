@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows;
+using System.Windows;\nusing System.Windows.Controls;
 using System.Windows.Media;
 using System.ComponentModel;
 using Microsoft.Win32;
@@ -12,7 +12,7 @@ using FluentFTP;
 
 namespace PS4wpfDumper
 {
-    public partial class PS4DashboardWindow : Window
+    public partial class PS4DashboardWindow : UserControl
     {
         private readonly string initialHost;
         private readonly int initialPort;
@@ -23,7 +23,7 @@ namespace PS4wpfDumper
         private bool busy;
         private string editorRemotePath;
 
-        public PS4DashboardWindow(string host, int port, string username, string password)
+        public PS4DashboardWindow() : this("10.0.0.6", 2121, "root", "root") { }\n\n        public PS4DashboardWindow(string host, int port, string username, string password)
         {
             InitializeComponent();
             initialHost = host ?? "";
@@ -289,7 +289,7 @@ namespace PS4wpfDumper
                 Width = 360,
                 Height = 150,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Owner = this,
+                Owner = Window.GetWindow(this),
                 ResizeMode = ResizeMode.NoResize,
                 ShowInTaskbar = false,
                 Background = new SolidColorBrush(Color.FromRgb(28, 28, 28)),
@@ -342,31 +342,23 @@ namespace PS4wpfDumper
                 Filter = "Text report (*.txt)|*.txt",
                 FileName = "PS4-Console-Report-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".txt"
             };
-            if (dialog.ShowDialog(this) == true)
+            if (dialog.ShowDialog(Window.GetWindow(this)) == true)
             {
                 File.WriteAllText(dialog.FileName, report.ToString(), Encoding.UTF8);
                 statusLabel.Text = "Report exported to " + dialog.FileName;
             }
         }
 
-        private void OpenDumperButton_Click(object sender, RoutedEventArgs e)
+        public void SetConnectionSettings(string host, int port, string user, string pass)
         {
-            var dumper = new MainWindow();
-            int port;
-            if (!Int32.TryParse(portTextBox.Text, out port)) port = 2121;
-            dumper.ApplyConnectionSettings(hostTextBox.Text.Trim(), port, username, password);
-            dumper.Owner = this;
-            dumper.Show();
-            statusLabel.Text = "Opened PS4 Dumper with the current connection settings.";
+            hostTextBox.Text = host ?? "";
+            portTextBox.Text = port.ToString();
+            networkInfo.Text = "Target: " + host + ":" + port + Environment.NewLine +
+                "FTP user: " + (String.IsNullOrWhiteSpace(user) ? "(not configured)" : user) +
+                Environment.NewLine + "Credentials are used only for this FTP connection.";
         }
 
-        private async void CloseButton_Click(object sender, RoutedEventArgs e)
-        {
-            await DisconnectClientAsync();
-            Close();
-        }
-
-        private async void Window_Closing(object sender, CancelEventArgs e)
+        public async Task ShutdownAsync()
         {
             if (ftpClient != null) await DisconnectClientAsync();
         }

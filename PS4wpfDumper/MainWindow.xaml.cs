@@ -188,6 +188,10 @@ namespace PS4wpfDumper
         public MainWindow()
         {
             InitializeComponent();
+            formatComboBox.Items.Clear();
+            formatComboBox.Items.Add("Raw game dump");
+            formatComboBox.Items.Add("Build FPKG package");
+            formatComboBox.SelectedIndex = 0;
             port = portTextBox.Text;
             ip = ipTextBox.Text;
             WBD = "Welcome to PS4 Dumper!";
@@ -260,6 +264,13 @@ namespace PS4wpfDumper
         // Method to be executed when button is clicked
         private async void button_Click_1(object sender, RoutedEventArgs e)
         {
+            checkBox.IsChecked = formatComboBox.SelectedIndex == 1;
+            if (outputListBox.SelectedItem == null)
+            {
+                MessageBox.Show("Connect to the PS4 and select a game mount before starting a dump.",
+                    "No game selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
             //Null out data before each start labels and image box
             if (baseRadioButton.IsChecked == true)
             {
@@ -292,6 +303,7 @@ namespace PS4wpfDumper
 
                 await dlAPPs();
                 await movePFSuroot();
+                WriteDumpManifest();
 
                 if (File.Exists($@"ext\{MainWindow.CUSA}{MainWindow.type}\sce_sys\keystone"))
                 {
@@ -350,6 +362,7 @@ namespace PS4wpfDumper
                 await unloadPic();
                 await Task.Delay(TimeSpan.FromSeconds(1));
                 await dlAPPs();//download game files and orginize them
+                WriteDumpManifest();
 
                 if (portTextBox.Text == "1337")
                 {
@@ -418,6 +431,7 @@ namespace PS4wpfDumper
 
                     await dlAPPs();
                     await movePFSuroot();
+                    WriteDumpManifest();
 
                     if (checkBox.IsChecked == true)
                     {
@@ -454,6 +468,7 @@ namespace PS4wpfDumper
                         await unloadPic();
                         await Task.Delay(TimeSpan.FromSeconds(1));
                         await dlAPPs();//download game files and orginize them
+                        WriteDumpManifest();
 
 
                         if (portTextBox.Text == "1337")
@@ -483,6 +498,23 @@ namespace PS4wpfDumper
                 
             }
 
+        }
+
+        private void WriteDumpManifest()
+        {
+            try
+            {
+                string dumpDirectory = Path.Combine("ext", (CUSA ?? TITLE_ID ?? "Unknown") + (type ?? "-app0"));
+                if (!Directory.Exists(dumpDirectory))
+                    return;
+
+                DumpManifest.Write(dumpDirectory, TITLE, TITLE_ID, CONTENT_ID, VERSION, APP_VER, type);
+                WBDs("Wrote Plutana-DMP dump watermark and metadata.");
+            }
+            catch (Exception ex)
+            {
+                WBDs("Dump completed, but metadata could not be written: " + ex.Message);
+            }
         }
 
         public async Task DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
@@ -1231,192 +1263,75 @@ namespace PS4wpfDumper
 
         public async Task ftpList()
         {
-            var token = new CancellationToken();
-            if (!string.IsNullOrEmpty(host) && !string.IsNullOrEmpty(port))
+            int ftpPort;
+            if (string.IsNullOrWhiteSpace(host) ||
+                !int.TryParse(port, out ftpPort) || ftpPort < 1 || ftpPort > 65535)
             {
-                try
+                MessageBox.Show("Enter a valid PS4 IP address/host and FTP port (1-65535).",
+                    "Connection details", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            button1.IsEnabled = false;
+            loadingLabel.Content = "Connecting to PS4 FTP...";
+            try
+            {
+                using (var conn = new AsyncFtpClient(host.Trim(), username, password, ftpPort))
                 {
-                    using (var conn = new AsyncFtpClient(host, username, password, int.Parse(port)))
+                    conn.Config.ConnectTimeout = 8000;
+                    conn.Config.ReadTimeout = 15000;
+                    WBDs("Connecting to PS4 with: " + host.Trim() + ":" + ftpPort);
+                    await conn.Connect();
+
+                    var listing = await conn.GetListing("/mnt/sandbox/pfsmnt/");
+                    var mounts = listing
+                        .Where(item => item.Type == FtpObjectType.Directory)
+                        .Where(item => !item.Name.EndsWith("-union", StringComparison.OrdinalIgnoreCase)
+                                    && !item.Name.EndsWith("-nest", StringComparison.OrdinalIgnoreCase)
+                                    && !item.Name.EndsWith("-ac", StringComparison.OrdinalIgnoreCase))
+                        .Where(item =>
+                            allRadioButton.IsChecked == true ||
+                            (baseRadioButton.IsChecked == true && item.Name.EndsWith("-app0", StringComparison.OrdinalIgnoreCase)) ||
+                            (patchRadioButton.IsChecked == true && item.Name.EndsWith("-patch0", StringComparison.OrdinalIgnoreCase)))
+                        .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+
+                    outputListBox.ItemsSource = null;
+                    outputListBox.Items.Clear();
+                    outputListBox.ItemsSource = mounts;
+
+                    if (mounts.Count == 0)
                     {
-                        //Console.WriteLine("Connecting");
-                        WBDs("Connecting to PS4 with: " + host + ":" + port);
-                        await conn.Connect(token);
-                        // Get the directory listing
-                        var listing = await conn.GetListing("/mnt/sandbox/pfsmnt/");
-                        this.Title = "Connected to PS4 with: " + host + ":" + port;
-                        WBDs("Connected to PS4 with: " + host + ":" + port);
-
-                        if (baseRadioButton.IsChecked == true)
-                        {
-                            // Stop the loading animation
-                            outputListBox.ItemsSource = null;
-                            outputListBox.Items.Clear();
-
-
-                            var filteredListing = listing
-                            .Where(item => !item.Name.EndsWith("-union") && !item.Name.EndsWith("-nest") && !item.Name.EndsWith("-ac") && !item.Name.EndsWith("-patch0"))
-                            .ToList();
-
-                            // Update the UI on the UI thread
-                            Dispatcher.Invoke(() =>
-                            {
-                                //SystemSounds.Beep.Play();
-
-                                outputListBox.ItemsSource = filteredListing;
-                            });                         
-
-                            // Download the directory and all its files &sub - folders
-                            if (listing.Any()) // check if listing has any items
-                            {
-                                try
-                                {
-                                    if (outputListBox.SelectedItem == null)
-                                    {
-                                        try
-                                        {
-                                            loadingLabel.Content = "No item is selected in the list box.";
-
-                                        }
-                                        catch (System.NullReferenceException ex)
-                                        {
-                                            outputListBox.ItemsSource = "Is ftp enabled on the ps4? " + ex.Message;
-
-                                        }
-
-                                        return;
-                                    }
-
-                                    FtpListItem firstItem = outputListBox.SelectedItem as FtpListItem;
-
-                                    if (firstItem?.Name == null)
-                                    {
-                                        loadingLabel.Content = $@"No Base Game Loaded.";
-                                        return;
-                                    }
-
-                                    string dlPath = "ext/" + firstItem.Name;
-
-                                    // Get the directory listing
-                                    string cusa = $@"{firstItem.Name.Substring(0, firstItem.Name.Length - 5)}";
-                                    CUSA = cusa;
-                                    cusaLabel.Content = cusa;
-                                    await conn.Disconnect();
-                                }
-                                catch (System.NullReferenceException ex)
-                                {
-
-                                    outputListBox.ItemsSource = "Is ftp enabled on the ps4? " + ex.Message;
-                                }
-
-
-                            }
-                        }
-
-                        if (patchRadioButton.IsChecked == true)
-                        {
-                            // Stop the loading animation
-                            outputListBox.ItemsSource = null;
-                            outputListBox.Items.Clear();
-
-
-                            var filteredListing = listing
-                            .Where(item => !item.Name.EndsWith("-union") && !item.Name.EndsWith("-nest") && !item.Name.EndsWith("-ac") && !item.Name.EndsWith("-app0"))
-                            .ToList();
-
-                            // Update the UI on the UI thread
-                            Dispatcher.Invoke(() =>
-                            {
-                                //SystemSounds.Beep.Play();
-
-                                outputListBox.ItemsSource = filteredListing;
-                            });
-
-                            // Create a new progress reporting object
-                            var progress = new Progress<FtpProgress>(x =>
-                            {
-                                WBDs($"Transferred: {x.Progress}%");
-                            });
-
-                            // Download the directory and all its files &sub - folders
-                            if (listing.Any()) // check if listing has any items
-                            {
-
-                                outputListBox.SelectedIndex = 0;
-                                FtpListItem firstItem = outputListBox.SelectedItem as FtpListItem; // get the first item
-                                string dlPath = @"ext\" + firstItem.Name;
-
-                                if (firstItem == null)
-                                {
-                                    loadingLabel.Content = $@"No Base Game Loaded.";
-                                }
-
-                                // Get the directory listing
-                                string cusa = $@"{firstItem.Name.Substring(0, firstItem.Name.Length - 7)}";
-                                CUSA = cusa;
-                                cusaLabel.Content = cusa;
-                                await conn.Disconnect();
-
-
-                            }
-                        }
-                        if (allRadioButton.IsChecked == true)
-                        {
-                            // Stop the loading animation
-                            outputListBox.ItemsSource = null;
-                            outputListBox.Items.Clear();
-
-
-                            var filteredListing = listing
-                            .Where(item => !item.Name.EndsWith("-union") && !item.Name.EndsWith("-nest") && !item.Name.EndsWith("-ac"))
-                            .ToList();
-
-                            // Update the UI on the UI thread
-                            Dispatcher.Invoke(() =>
-                            {
-                                //SystemSounds.Beep.Play();
-
-                                outputListBox.ItemsSource = filteredListing;
-                            });
-
-                            // Create a new progress reporting object
-                            var progress = new Progress<FtpProgress>(x =>
-                            {
-                                WBDs($"Transferred: {x.Progress}%");
-                            });
-
-                            // Download the directory and all its files &sub - folders
-                            if (listing.Any()) // check if listing has any items
-                            {
-
-                                outputListBox.SelectedIndex = 0;
-                                FtpListItem firstItem = outputListBox.SelectedItem as FtpListItem; // get the first item
-                                string dlPath = "ext/" + firstItem.Name;
-
-                                if (firstItem == null)
-                                {
-                                    loadingLabel.Content = $@"No Base Game Loaded.";
-                                }
-
-                                // Get the directory listing
-                                string cusa = $@"{firstItem.Name.Substring(0, firstItem.Name.Length - 5)}";
-                                CUSA = cusa;
-                                cusaLabel.Content = cusa;
-                                await conn.Disconnect();
-
-
-                            }
-                        }
+                        loadingLabel.Content = "No matching game mounts found. Start a game and refresh.";
+                        cusaLabel.Content = "";
+                        gameLabel.Content = "";
+                        return;
                     }
-                }
-            
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                    outputListBox.SelectedIndex = 0;
+                    var selected = mounts[0];
+                    GameDir = selected.Name;
+                    localDirectoryPath = Path.Combine("ext", GameDir);
+                    var titleIdMatch = Regex.Match(selected.Name, @"[A-Z]{4}[0-9]{5}", RegexOptions.IgnoreCase);
+                    CUSA = titleIdMatch.Success ? titleIdMatch.Value.ToUpperInvariant() : selected.Name;
+                    cusaLabel.Content = CUSA;
+                    gameLabel.Content = (selected.Name.EndsWith("-patch0", StringComparison.OrdinalIgnoreCase)
+                        ? "Game update mount" : "Base game mount") + " • " + selected.Name;
+                    loadingLabel.Content = "Found " + mounts.Count + " game mount(s). Select one, then choose a dump format.";
+                    this.Title = "PS4 Dumper — " + host.Trim() + ":" + ftpPort;
+                    WBDs("Found " + mounts.Count + " game mount(s).");
+                    await conn.Disconnect();
                 }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show($"You need to fill out the IP and Port information to continue.\n\nIP: {host}\nPort: {port}\n\nCheck your IP and Port if you do not see it above.", $@"{error}", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                loadingLabel.Content = "FTP connection failed.";
+                MessageBox.Show("Could not read PS4 game mounts.\n\n" + ex.Message,
+                    "FTP connection error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                button1.IsEnabled = true;
             }
         }
 

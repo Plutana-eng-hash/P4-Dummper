@@ -316,7 +316,7 @@ namespace PS4wpfDumper
             if (ftpClient == null || !ftpClient.IsConnected) { fileExplorerStatus.Text = "Connect to PS4 first."; return; }
             string name = PromptForFolderName();
             if (String.IsNullOrWhiteSpace(name) || name == "." || name == ".." ||
-                name.IndexOfAny(new[] { '/', '\\\\' }) >= 0) return;
+                name.IndexOfAny(new[] { '/', '\\' }) >= 0) return;
             try
             {
                 string target = RemotePath == "/" ? "/" + name : RemotePath + "/" + name;

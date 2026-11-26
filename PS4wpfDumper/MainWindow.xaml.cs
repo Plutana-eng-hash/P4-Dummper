@@ -226,14 +226,10 @@ namespace PS4wpfDumper
             // Add event handler for ListBox selection change
             outputListBox.SelectionChanged += outputListBox_SelectionChanged;
             //pkgBuilder.Logger?.Invoke("This is a log message");
-            if (patchRadioButton.IsChecked == true)
-            {
+            if (baseRadioButton.IsChecked == true)
                 type = "-app0";
-            }
-            if (patchRadioButton.IsChecked == true)
-            {
+            else if (patchRadioButton.IsChecked == true)
                 type = "-patch0";
-            }
             startClean();
         }
 
@@ -1094,8 +1090,23 @@ namespace PS4wpfDumper
             }
 
             GameDir = selectedItem.Name;
-            // Download the directory
-            localDirectoryPath = "ext" + "/" + GameDir;
+            localDirectoryPath = Path.Combine("ext", GameDir);
+            var titleIdMatch = Regex.Match(GameDir, @"[A-Z]{4}[0-9]{5}", RegexOptions.IgnoreCase);
+            CUSA = titleIdMatch.Success ? titleIdMatch.Value.ToUpperInvariant() : GameDir;
+            cusaLabel.Content = CUSA;
+            bool isPatch = GameDir.EndsWith("-patch0", StringComparison.OrdinalIgnoreCase);
+            if (isPatch)
+            {
+                patchRadioButton.IsChecked = true;
+                type = "-patch0";
+                gameLabel.Content = "Update mount • " + GameDir;
+            }
+            else
+            {
+                baseRadioButton.IsChecked = true;
+                type = "-app0";
+                gameLabel.Content = "Base game mount • " + GameDir;
+            }
         }
 
         private void allRadioButton_Checked(object sender, RoutedEventArgs e)
@@ -1290,7 +1301,9 @@ namespace PS4wpfDumper
                                     && !item.Name.EndsWith("-nest", StringComparison.OrdinalIgnoreCase)
                                     && !item.Name.EndsWith("-ac", StringComparison.OrdinalIgnoreCase))
                         .Where(item =>
-                            allRadioButton.IsChecked == true ||
+                            (allRadioButton.IsChecked == true &&
+                                (item.Name.EndsWith("-app0", StringComparison.OrdinalIgnoreCase) ||
+                                 item.Name.EndsWith("-patch0", StringComparison.OrdinalIgnoreCase))) ||
                             (baseRadioButton.IsChecked == true && item.Name.EndsWith("-app0", StringComparison.OrdinalIgnoreCase)) ||
                             (patchRadioButton.IsChecked == true && item.Name.EndsWith("-patch0", StringComparison.OrdinalIgnoreCase)))
                         .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
@@ -1302,12 +1315,14 @@ namespace PS4wpfDumper
 
                     if (mounts.Count == 0)
                     {
+                        listingStatusLabel.Content = "No game mounts found";
                         loadingLabel.Content = "No matching game mounts found. Start a game and refresh.";
                         cusaLabel.Content = "";
                         gameLabel.Content = "";
                         return;
                     }
 
+                    listingStatusLabel.Content = "Detected " + mounts.Count + " game mount(s)";
                     outputListBox.SelectedIndex = 0;
                     var selected = mounts[0];
                     GameDir = selected.Name;

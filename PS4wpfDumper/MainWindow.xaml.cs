@@ -190,6 +190,10 @@ namespace PS4wpfDumper
             // Resolve all legacy relative paths (bins, libs, ext, output) from the EXE.
             Environment.CurrentDirectory = AppDomain.CurrentDomain.BaseDirectory;
             InitializeComponent();
+            // Wire context-menu actions in code instead of XAML. This keeps MenuItem
+            // instances out of WPF's generated IComponentConnector table, avoiding
+            // the MenuItem-to-Label cast failure during BAML startup.
+            WireMountContextMenuActions();
             formatComboBox.Items.Clear();
             formatComboBox.Items.Add("Raw game dump");
             formatComboBox.Items.Add("Build FPKG package");
@@ -233,6 +237,34 @@ namespace PS4wpfDumper
             else if (patchRadioButton.IsChecked == true)
                 type = "-patch0";
             startClean();
+        }
+
+        private void WireMountContextMenuActions()
+        {
+            var setter = outputListBox.ItemContainerStyle.Setters
+                .OfType<System.Windows.Setter>()
+                .FirstOrDefault(s => s.Property == FrameworkElement.ContextMenuProperty);
+            var contextMenu = setter == null ? null : setter.Value as System.Windows.Controls.ContextMenu;
+            if (contextMenu == null) return;
+
+            foreach (var menuItem in contextMenu.Items.OfType<System.Windows.Controls.MenuItem>())
+            {
+                switch (menuItem.Header as string)
+                {
+                    case "Dump this mount":
+                        menuItem.Click += MountDumpMenu_Click;
+                        break;
+                    case "Copy title ID":
+                        menuItem.Click += MountCopyTitleIdMenu_Click;
+                        break;
+                    case "Open local dump folder":
+                        menuItem.Click += MountOpenFolderMenu_Click;
+                        break;
+                    case "Copy mount path":
+                        menuItem.Click += MountCopyPathMenu_Click;
+                        break;
+                }
+            }
         }
 
         private void runtimeInspectorButton_Click(object sender, RoutedEventArgs e)

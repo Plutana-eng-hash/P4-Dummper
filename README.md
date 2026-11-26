@@ -40,3 +40,8 @@ Open `PS4wpfDumper.sln` in Visual Studio with the .NET Framework 4.8.1 targeting
 - The FTP mount list contains content currently mounted by the console; start the game and reconnect if the list is empty.
 - The package-building option uses the repository's existing GP4/FPKG implementation and its existing requirements.
 - The Plutana-DMP watermark is written as metadata beside the dump content, not embedded into executable or game data.
+
+
+## Runtime Inspector
+
+The Windows Runtime Inspector receiver and its JSON protocol are documented in [docs/RUNTIME-INSPECTOR.md](docs/RUNTIME-INSPECTOR.md). It calculates module-relative offsets from supplied module-base/address records. A PS4-side reader is a separate component and is not included in this Windows receiver.

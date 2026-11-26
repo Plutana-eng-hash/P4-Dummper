@@ -1091,25 +1091,31 @@ namespace PS4wpfDumper
             Directory.CreateDirectory(cacheRoot);
             foreach (var mount in mounts)
             {
-                try
+                string titleId = mount.TitleId;
+                if (string.IsNullOrWhiteSpace(titleId) || !Regex.IsMatch(titleId, @"^[A-Z]{4}[0-9]{5}$")) continue;
+
+                string folder = Path.Combine(cacheRoot, titleId);
+                Directory.CreateDirectory(folder);
+                string sfoPath = Path.Combine(folder, "param.sfo");
+                string iconPath = Path.Combine(folder, "icon0.png");
+
+                // Metadata is optional: a missing icon or SFO must never prevent the mount from appearing.
+                if (!File.Exists(sfoPath))
                 {
-                    string titleId = mount.TitleId;
-                    if (string.IsNullOrWhiteSpace(titleId) || !Regex.IsMatch(titleId, @"^[A-Z]{4}[0-9]{5}$")) continue;
-                    string folder = Path.Combine(cacheRoot, titleId);
-                    Directory.CreateDirectory(folder);
-                    string sfoPath = Path.Combine(folder, "param.sfo");
-                    string iconPath = Path.Combine(folder, "icon0.png");
-                    if (!File.Exists(sfoPath))
-                    {
-                        await conn.DownloadFile(sfoPath, "/user/appmeta/" + titleId + "/param.sfo", FtpLocalExists.Skip, FtpVerify.None);
-                    }
-                    if (!File.Exists(iconPath))
-                    {
-                        await conn.DownloadFile(iconPath, "/user/appmeta/" + titleId + "/icon0.png", FtpLocalExists.Skip, FtpVerify.None);
-                    }
-                    string friendlyName = null;
-                    string sfoTitleId = titleId;
-                    if (File.Exists(sfoPath))
+                    try { await conn.DownloadFile(sfoPath, "/user/appmeta/" + titleId + "/param.sfo", FtpLocalExists.Skip, FtpVerify.None); }
+                    catch (Exception ex) { Console.WriteLine("SFO metadata unavailable for " + titleId + ": " + ex.Message); }
+                }
+                if (!File.Exists(iconPath))
+                {
+                    try { await conn.DownloadFile(iconPath, "/user/appmeta/" + titleId + "/icon0.png", FtpLocalExists.Skip, FtpVerify.None); }
+                    catch (Exception ex) { Console.WriteLine("Game icon unavailable for " + titleId + ": " + ex.Message); }
+                }
+
+                string friendlyName = null;
+                string sfoTitleId = titleId;
+                if (File.Exists(sfoPath))
+                {
+                    try
                     {
                         var sfo = ParamSfo.Deserialize(File.ReadAllBytes(sfoPath));
                         var titleValue = sfo["TITLE"];
@@ -1117,12 +1123,9 @@ namespace PS4wpfDumper
                         if (titleValue != null) friendlyName = titleValue.ToString();
                         if (idValue != null) sfoTitleId = idValue.ToString();
                     }
-                    mount.SetMetadata(friendlyName, sfoTitleId, iconPath);
+                    catch (Exception ex) { Console.WriteLine("Could not parse SFO for " + titleId + ": " + ex.Message); }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Could not load metadata for " + mount.Item.Name + ": " + ex.Message);
-                }
+                mount.SetMetadata(friendlyName, sfoTitleId, iconPath);
             }
         }
 

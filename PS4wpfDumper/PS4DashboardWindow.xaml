@@ -37,7 +37,7 @@
         <Grid Grid.Row="0" Margin="0,0,0,18">
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
             <StackPanel>
-                <TextBlock Text="PS4 CONSOLE" FontSize="25" FontWeight="Bold" LetterSpacing="1"/>
+                <TextBlock Text="PS4 CONSOLE" FontSize="25" FontWeight="Bold"/>
                 <TextBlock Text="FTP CONNECTION  /  DEVICE OVERVIEW" FontSize="10" Foreground="#929292" Margin="0,4,0,0"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">

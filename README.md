@@ -6,11 +6,10 @@ Windows WPF utility for dumping mounted PS4 game content from a PS4 running Gold
 
 - Connect to the PS4 FTP server and scan `/mnt/sandbox/pfsmnt/` for mounted game directories.
 - Filter the library to base-game mounts, update mounts, or both.
-- Identify Title IDs from mount names (for example, `CUSAxxxxx`) and show the selected mount type.
-- Choose an output mode:
-  - **Raw game dump** — keep the extracted game files in the `ext` folder.
-  - **Build FPKG package** — run the existing GP4/FPKG build path after extraction.
-- Write a `PLUTANA-DMP.xml` and `PLUTANA-DMP.txt` provenance watermark into each dump folder. These are sidecar metadata files; the game files themselves are not modified by the watermark.
+- Identify Title IDs from mount names and show the selected mount type.
+- Choose raw game dump or FPKG build output.
+- Show game names and icons from PS4 app metadata when available.
+- Right-click a detected mount for dump, copy-title-ID, open-output-folder, and copy-mount-path actions.
 
 ## Requirements
 
@@ -18,30 +17,29 @@ Windows WPF utility for dumping mounted PS4 game content from a PS4 running Gold
 - A PS4 with GoldHEN running and its FTP server enabled.
 - Network connectivity between the PC and PS4.
 
-## Use
-
-1. Start GoldHEN and enable FTP on the PS4.
-2. Start the game so its content is mounted.
-3. Launch PS4Dumper on Windows.
-4. Enter the PS4 IP address and FTP port (normally `2121`).
-5. Click **Connect** to detect the mounted game folders.
-6. Choose **Base Game**, **Game Patch**, or **All**, then select the mount to dump.
-7. Choose **Raw game dump** or **Build FPKG package** in the output selector.
-8. Click **Download** and wait for the operation to finish.
-
-The app stores extracted files under `ext\\` and generated packages under `FPKG\\`.
-
-## Build
+## Build the Windows app
 
 Open `PS4wpfDumper.sln` in Visual Studio with the .NET Framework 4.8.1 targeting pack, or run the repository's **Build** GitHub Actions workflow. The workflow builds the x64 Release configuration and uploads a ZIP artifact.
 
-## Notes
+## TrampWare plugin build
 
-- The FTP mount list contains content currently mounted by the console; start the game and reconnect if the list is empty.
-- The package-building option uses the repository's existing GP4/FPKG implementation and its existing requirements.
-- The Plutana-DMP watermark is written as metadata beside the dump content, not embedded into executable or game data.
+TrampWare is a GoldHEN game plugin, so its correct output format is **PRX/ SPRX**, not a generic `.bin` payload. The separate **Build PS4 plugins** GitHub Actions workflow checks out the TrampWare source and GoldHEN plugin SDK, builds it with the OpenOrbis toolchain, and uploads the `TrampWare-PS4-plugin` artifact containing `TrampWare.prx` and `TrampWare.sprx`.
 
+To install it:
 
-## Runtime Inspector
+1. Download and extract the `TrampWare-PS4-plugin` artifact from the workflow run.
+2. Copy `TrampWare.prx` to `/data/GoldHEN/plugins/trampware.prx` on the PS4.
+3. Add `/data/GoldHEN/plugins/trampware.prx` as a plugin entry in `/data/GoldHEN/plugins.ini`.
+4. Restart the game (or reboot the console) so GoldHEN loads the plugin.
 
-The Windows Runtime Inspector receiver and its JSON protocol are documented in [docs/RUNTIME-INSPECTOR.md](docs/RUNTIME-INSPECTOR.md). It calculates module-relative offsets from supplied module-base/address records. A PS4-side reader is a separate component and is not included in this Windows receiver.
+The in-game menu opens with **L3 + R3** by default. Use D-pad navigation, Cross to select, Circle to close, L1/R1 to change tabs, and Triangle to return to categories. TrampWare settings are stored in `/data/GoldHEN/trampware.ini`; its log is at `/data/trampware/trampware.log`.
+
+**Important:** FTP copying the plugin does not inject it into a game that is already running. GoldHEN loads configured plugins at the supported game/plugin startup point. The PC app must not claim that the menu is live until the plugin is actually loaded.
+
+## Goto Home
+
+A Goto Home action must use the PS4 system's normal application-exit request (`sceSystemServiceLoadExec("exit", NULL)`). It must not kill arbitrary processes or reboot the console. This repository does not yet ship a verified Goto Home payload binary; the binary needs to be built and validated against the PS4 payload SDK and supported firmware before it is offered as a runnable `.bin`. A source placeholder or renamed PRX would not be a working payload.
+
+## Existing payloads
+
+The `PS4wpfDumper/bins` directory contains the existing PS4 payload binaries. Do not rename PRX plugins to `.bin`: GoldHEN plugin loading and BinLoader payload execution are different interfaces.

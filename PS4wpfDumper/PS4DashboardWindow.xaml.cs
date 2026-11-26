@@ -17,8 +17,8 @@ namespace PS4wpfDumper
     {
         private readonly string initialHost;
         private readonly int initialPort;
-        private readonly string username;
-        private readonly string password;
+        private string username;
+        private string password;
         private AsyncFtpClient ftpClient;
         private readonly StringBuilder report = new StringBuilder();
         private bool busy;
@@ -356,6 +356,8 @@ namespace PS4wpfDumper
         {
             hostTextBox.Text = host ?? "";
             portTextBox.Text = port.ToString();
+            username = user ?? "";
+            password = pass ?? "";
             networkInfo.Text = "Target: " + host + ":" + port + Environment.NewLine +
                 "FTP user: " + (String.IsNullOrWhiteSpace(user) ? "(not configured)" : user) +
                 Environment.NewLine + "Credentials are used only for this FTP connection.";

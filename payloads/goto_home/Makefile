@@ -4,8 +4,8 @@ else
     $(error PS4_PAYLOAD_SDK is undefined)
 endif
 
-TARGET_ELF := "Goto Home.elf"
-TARGET_BIN := "Goto Home.bin"
+TARGET_ELF := GotoHome.elf
+TARGET_BIN := GotoHome.bin
 CFLAGS := -std=c11 -Wall -Wextra -Werror -O2
 
 .PHONY: all clean

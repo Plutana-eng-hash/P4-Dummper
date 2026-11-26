@@ -23,7 +23,7 @@ Open `PS4wpfDumper.sln` in Visual Studio with the .NET Framework 4.8.1 targeting
 
 ## TrampWare plugin build
 
-TrampWare is a GoldHEN game plugin, so its correct output format is **PRX/ SPRX**, not a generic `.bin` payload. The separate **Build PS4 plugins** GitHub Actions workflow checks out the TrampWare source and GoldHEN plugin SDK, builds it with the OpenOrbis toolchain, and uploads the `TrampWare-PS4-plugin` artifact containing `TrampWare.prx` and `TrampWare.sprx`.
+TrampWare is a GoldHEN game plugin, so its correct output format is **PRX/ SPRX**, not a generic `.bin` payload. The main **Build** GitHub Actions workflow now builds TrampWare with the GoldHEN plugin SDK and OpenOrbis toolchain as a prerequisite to the Windows app build. The resulting Windows ZIP includes `plugins/TrampWare.prx` and `plugins/TrampWare.sprx`, and the workflow also uploads a standalone `TrampWare-PS4-plugin` artifact.
 
 To install it:
 

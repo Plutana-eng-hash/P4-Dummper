@@ -1340,6 +1340,7 @@ namespace PS4wpfDumper
             }
             catch (Exception ex)
             {
+                listingStatusLabel.Content = "FTP connection failed";
                 loadingLabel.Content = "FTP connection failed.";
                 MessageBox.Show("Could not read PS4 game mounts.\n\n" + ex.Message,
                     "FTP connection error", MessageBoxButton.OK, MessageBoxImage.Error);

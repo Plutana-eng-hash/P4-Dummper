@@ -18,7 +18,7 @@
  </Window.Resources>
  <TabControl x:Name="mainTabs" Background="#FF000000" BorderBrush="#FF777777">
   <TabItem Header="DUMPER + PAYLOAD">
-    <Grid Margin="0,0,3,10" Height="392" RenderTransformOrigin="0.425,0.588">
+    <Grid Margin="12" RenderTransformOrigin="0.425,0.588">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="0*"/>
             <ColumnDefinition/>
